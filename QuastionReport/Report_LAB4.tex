@@ -1,0 +1,108 @@
+\documentclass[12pt, a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage[dvips]{graphicx}
+
+\usepackage[oglav,spisok,boldsect,eqwhole,figwhole,hyperref,hyperprint,remarks,greekit]{./style/fn2kursstyle}
+\graphicspath{{./style/}{./figures/}}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{supertabular}
+\usepackage{multicol}
+\usepackage{hhline}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{adjustbox}
+\usepackage{amsmath}
+\usepackage{verbatim}
+\usepackage{amsfonts}
+%\usepackage{mathabx}
+\usepackage{graphicx}
+\usepackage{subcaption}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+	language=C++,
+	aboveskip=1mm,
+	belowskip=1mm,
+	showstringspaces=false,
+	columns=flexible,
+	basicstyle={\small},
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	keywordstyle=\color{red},
+	commentstyle=\color{dkgreen},
+	stringstyle=\color{mauve},
+	breaklines=true,
+	breakatwhitespace=true,
+	tabsize=2
+}
+\title{Численное решение краевых задач
+	для двумерного уравнения Пуассона \\ Варианты 5, 16}
+
+
+%\authorfirst{О.\,Д.~Климов}
+%\authorsecond{О.\,Д.~Климов} TODO: прописать команды в style.sty
+
+%\supervisor{С.\,А.~Конев}
+\supervisor{ }
+\group{ФН2-61Б}
+\date{2024}
+
+%\renewcommand{\vec}[1]{\text{\mathversion{bold}${#1}$}}%{\bi{#1}}
+\newcommand\thh[1]{\text{\mathversion{bold}${#1}$}}
+\renewcommand{\labelenumi}{\theenumi)}
+\renewcommand{\labelenumi}{\theenumi)}
+
+\newcommand{\opr}{\textbf{\underline{{Опр.}}}\quad}
+\newcommand{\theorem}{\textbf{\underline{{Теор.}}}\quad}
+\renewcommand{\phi}{\varphi}
+\renewcommand{\k}[1]{\textbf{\textit{#1}}}
+\newcommand{\widecheck}[1]{\check{#1}}
+
+\newcounter{mycounter}
+\newcommand{\quastion}[1]{%
+	\stepcounter{mycounter}%
+	\textbf{\themycounter}.  %
+	\textbf{\textit{#1}}
+	
+}
+\newcommand{\down}[1]{\widecheck{#1}}
+\newcommand{\pon}[1]{\mathop {#1}\limits^ \circ}
+\newcommand{\rusg}{\text{Г}}
+
+\begin{document}
+	\maketitle
+	\section{Ответы на контрольные вопросы}
+	
+	\quastion{Оцените число действий, необходимое для перехода на
+	следующий слой по времени методом переменных направлений.}
+	
+	
+	\quastion{Почему при увеличении числа измерений резко возраста-
+	ет количество операций для решения неявных схем (по сравнению с одномерной схемой)?}
+	
+	
+	\quastion{Можно ли использовать метод переменных направлений в
+	областях произвольной формы?}
+	
+	
+	\quastion{Можно ли использовать метод переменных направлений
+	для решения пространственных и вообще $n$-мерных задач?}
+	
+	
+	\quastion{Можно ли использовать метод переменных направлений
+	на неравномерных сетках?}
+
+	\clearpage
+	\begin{thebibliography}{1}
+		\bibitem{1} Галанин М.П., Савенков Е.Б. Методы численного анализа математических моделей. М.: Изд-во МГТУ им. Н.Э. Баумана. 2018. 592 с.
+		
+	\end{thebibliography}
+	
+\end{document}
