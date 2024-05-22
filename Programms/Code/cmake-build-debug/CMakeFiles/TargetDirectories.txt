@@ -1,0 +1,3 @@
+C:/Users/gerce/Documents/WORK DIRECTORY/Численные методы/Лабораторные работы/Numerical_Methods_LAB4/Programms/Code/cmake-build-debug/CMakeFiles/Code.dir
+C:/Users/gerce/Documents/WORK DIRECTORY/Численные методы/Лабораторные работы/Numerical_Methods_LAB4/Programms/Code/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/gerce/Documents/WORK DIRECTORY/Численные методы/Лабораторные работы/Numerical_Methods_LAB4/Programms/Code/cmake-build-debug/CMakeFiles/rebuild_cache.dir

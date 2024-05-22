@@ -1,0 +1,5 @@
+# ninja log v5
+7	104	7380701773709730	CMakeFiles/Code.dir/Libs/FileIO.cpp.obj	185d97b11315ca3f
+14	567	7380701778355155	CMakeFiles/Code.dir/main.cpp.obj	4a10194de979a3ce
+1	897	7380701781654903	CMakeFiles/Code.dir/Libs/algebra.cpp.obj	f3f04b4394e654bd
+898	1073	7380701783367591	Code.exe	d66db3858ee1b191
