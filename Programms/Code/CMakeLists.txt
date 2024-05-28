@@ -13,4 +13,11 @@ add_executable(Code
         Libs/algebra.h
         Libs/FileIO.cpp
         Libs/FileIO.h
-        main.cpp)
+        main.cpp
+        Libs/PDEProblem.cpp
+        Libs/PDEProblem.h
+        Libs/PDEProblem.h
+        Libs/SolvePDE.cpp
+        Libs/SolvePDE.cpp
+        Libs/SolvePDE.h
+        Libs/SolvePDE.h)
