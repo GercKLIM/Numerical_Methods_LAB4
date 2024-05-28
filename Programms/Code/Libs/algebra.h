@@ -550,32 +550,3 @@ vector<vector<LT>> transpose(vector<vector<LT>> matr)
 }
 
 
-//решение СЛАУ методом правой прогонки
-//A x_{i-1} - B x_i + C x_{i+1} = -D  (***)
-// Если векторы диагоналей исходной системы заданы как A,B,C,D (A - диагональ опд главной, B - главная диагональ, C - диагональ над главной, D- правая часть)
-// То для правильного расчёта необходимо передавать A, (-1.)*B, C, (-1.)*D
-// Так как прогонка актуальная для системы (***)
-std::vector<double> TridiagonalMatrixAlgorithm(
-        std::vector<double> a,
-        std::vector<double> b,
-        std::vector<double> c,
-        std::vector<double> d
-){
-    int n = b.size();
-    std::vector<double> alphas({ c[0] / b[0] });
-    std::vector<double> betas({d[0] / b[0]});
-    for (int i = 1; i < n-1; ++i)
-    {
-        double denom = b[i] - a[i] * alphas[i - 1];
-        alphas.push_back(c[i] / denom);
-        betas.push_back((d[i] + a[i] * betas[i-1]) / denom);
-    }
-    betas.push_back((d[n - 1] + a[n - 1] * betas[n - 2]) / (b[n-1] - a[n-1] * alphas[n - 2]));
-    std::vector<double> SolutionX({betas[n-1]});
-    for (int i = n - 2; i >= 0; --i)
-    {
-        SolutionX.push_back(alphas[i] * SolutionX[n - i - 2] + betas[i]);
-    }
-    reverse(SolutionX.begin(), SolutionX.end());
-    return SolutionX;
-}
