@@ -18,11 +18,11 @@ int main() {
     test1.initDeflectionFunc_isSet = true;
     test1.dirichletBoundaryFunc_North = ([&] (std::vector<double> point) {return 1.;});
     test1.dirichletBoundaryFunc_North_isSet = true;
-    test1.dirichletBoundaryFunc_South = ([&] (std::vector<double> point) {return 1.;});
+    test1.dirichletBoundaryFunc_South = ([&] (std::vector<double> point) {return 2.;});
     test1.dirichletBoundaryFunc_South_isSet = true;
-    test1.dirichletBoundaryFunc_West = ([&] (std::vector<double> point) {return 1.;});
+    test1.dirichletBoundaryFunc_West = ([&] (std::vector<double> point) {return 3.;});
     test1.dirichletBoundaryFunc_West_isSet = true;
-    test1.dirichletBoundaryFunc_East = ([&] (std::vector<double> point) {return 1.;});
+    test1.dirichletBoundaryFunc_East = ([&] (std::vector<double> point) {return 4.;});
     test1.dirichletBoundaryFunc_East_isSet = true;
     // Расчёт первого теста
     LongTransScheme(test1, "Test1");
