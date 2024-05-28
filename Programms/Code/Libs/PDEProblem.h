@@ -78,6 +78,7 @@ public:
 
     // Воздействие внешних сил (F(x,y)) (если == 0, то уравнение - однородное)
     std::function<double(std::vector<double>)> extForcesFunction;
+    bool  extForcesFunction_isSet = false;
 };
 
 #endif //CODE_PDEPROBLEM_H

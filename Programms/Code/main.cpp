@@ -24,7 +24,6 @@ int main() {
     test1.dirichletBoundaryFunc_West_isSet = true;
     test1.dirichletBoundaryFunc_East = ([&] (std::vector<double> point) {return 1.;});
     test1.dirichletBoundaryFunc_East_isSet = true;
-
     // Расчёт первого теста
     LongTransScheme(test1, "Test1");
     return 0;

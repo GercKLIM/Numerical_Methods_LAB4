@@ -10,6 +10,16 @@ std::vector<std::vector<double>>  initializeState(const PDEProblem &problem){
     std::vector<std::vector<double>> new_state(problem.num_x_steps+1, std::vector<double>(problem.num_y_steps+1,0));
     double x_i = problem.x0;
     double y_i = problem.y0;
+
+    /*     y0   y1 ...  yM
+     *   -------------------
+     * x0| u00  u01 ... u0M
+     * x1| u10  u11 ... u1M
+     *...| ................
+     * xN| uN0  uN1 ... uNM
+     * ---------------------
+     * */
+
     if(problem.initDeflectionFunc_isSet) {
         for (int i = 0; i <= problem.num_x_steps; ++i) {
             for (int j = 0; j <= problem.num_y_steps; ++j) {
@@ -27,7 +37,25 @@ std::vector<std::vector<double>>  initializeState(const PDEProblem &problem){
     return new_state;
 }
 
+// Функция F из методички
+//u__m -- u -- u__p --->y
+double F(const double& u, const double& u__m, const double& u__p, const double& x, const double& y, const PDEProblem& problem){
+    double res = 2/problem.tau * u + (u__p - 2*u + u__m)/(problem.hy * problem.hy);
+    if(problem.extForcesFunction_isSet){
+        res += problem.extForcesFunction({x,y});
+    }
+    return res;
+}
 
+// Функция F с шапочкой (из фольги хи-хи) из методички
+//u_m_ -- u -- u_p_ --->x
+double F_hat(const double& u, const double& u_m_, const double& u_p_, const double& x, const double& y, const PDEProblem& problem){
+    double res = 2/problem.tau * u + (u_p_ - 2*u + u_m_)/(problem.hx * problem.hx);
+    if(problem.extForcesFunction_isSet){
+        res += problem.extForcesFunction({x,y});
+    }
+    return res;
+}
 
 bool LongTransScheme(const PDEProblem &problem, const string &filename) {
 
@@ -49,14 +77,70 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
         std::vector<std::vector<double>> state_jp(state_j);
         fpoints << t_i << endl;
         write2DVectorToFile(fpoints, state_j);
+
+        // Utility vectors
+        std::vector<double> Axs(problem.num_x_steps+1, 0);
+        std::vector<double> Bxs(problem.num_x_steps+1, 0);
+        std::vector<double> Cxs(problem.num_x_steps+1, 0);
+        std::vector<double> Dxs(problem.num_x_steps+1, 0);
+        std::vector<double> Ays(problem.num_x_steps+1, 0);
+        std::vector<double> Bys(problem.num_y_steps+1, 0);
+        std::vector<double> Cys(problem.num_y_steps+1, 0);
+        std::vector<double> Dys(problem.num_y_steps+1, 0);
+
         for(int j = 0; j < problem.num_time_steps; ++j){
+            // слой ,,половинный'' первый (k+1/2)
             t_i += half_tau;
 
             // Calculation across X-axis
 
+            // Г.У. Запад
+            if(problem.dirichletBoundaryFunc_West_isSet){
+                Axs[0] = 0.;
+                Bxs[0] = 1.;
+                Cxs[0] = 0.;
+                Dxs[0] = problem.dirichletBoundaryFunc_West({problem.x0, y_i});
+            }
+            else if(problem.neymanBoundaryFunc_West_isSet){
+                /* аппроксимация второго рода*/
+            }
+
+            // Г.У. Восток
+            if(problem.dirichletBoundaryFunc_East_isSet){
+                Axs[problem.num_x_steps] = 0.;
+                Bxs[problem.num_x_steps] = 1.;
+                Cxs[problem.num_x_steps] = 0.;
+                Dxs[problem.num_x_steps] = problem.dirichletBoundaryFunc_East({problem.X, y_i});
+            }
+            else if(problem.neymanBoundaryFunc_East_isSet){
+                /* аппроксимация второго рода*/
+            }
+
+            // слой ,,половинный'' второй (k+1)
             t_i += half_tau;
 
             // Calculation across Y-axis
+
+            // Г.У. Север
+            if(problem.dirichletBoundaryFunc_North_isSet){
+                Ays[problem.num_y_steps] = 0.;
+                Bys[problem.num_y_steps] = 1.;
+                Cys[problem.num_y_steps] = 0.;
+                Dys[problem.num_y_steps] = problem.dirichletBoundaryFunc_North({x_i, problem.Y});
+            }
+            else if(problem.neymanBoundaryFunc_North_isSet){
+                /* аппроксимация второго рода*/
+            }
+            // Г.У. Юг
+            if(problem.dirichletBoundaryFunc_South_isSet){
+                Ays[0] = 0.;
+                Bys[0] = 1.;
+                Cys[0] = 0.;
+                Dys[0] = problem.dirichletBoundaryFunc_South({x_i, problem.y0});
+            }
+            else if(problem.neymanBoundaryFunc_South_isSet){
+                /* аппроксимация второго рода*/
+            }
 
         }
         return true;
