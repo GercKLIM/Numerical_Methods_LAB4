@@ -49,6 +49,41 @@ void writeVectorToFile(fstream& file, DT v_0, vector<DT> v)
 }
 
 template<typename DT>
+void write2DVectorToFile(ofstream& file, const std::vector<std::vector<DT>>& v)
+{
+    int n = v.size();
+    if(n) {
+        int m = v[0].size();
+        for (int i = 0; i < n; ++i)
+        {
+            for (int j = 0; j < m; ++j)
+            {
+                file << setprecision(16) <<  v[i][j] << " ";
+            }
+            file << endl;
+        }
+    }
+}
+
+template<typename DT>
+void write2DVectorToFile(fstream& file, const std::vector<std::vector<DT>>& v)
+{
+    int n = v.size();
+    if(n) {
+        int m = v[0].size();
+        for (int i = 0; i < n; ++i)
+        {
+            for (int j = 0; j < m; ++j)
+            {
+                file << setprecision(16) <<  v[i][j] << " ";
+            }
+            file << endl;
+        }
+    }
+}
+
+
+template<typename DT>
 void write_data_to_file(string filepath, vector<vector<DT>> data)
 {
     ofstream output_data;

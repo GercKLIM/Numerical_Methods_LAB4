@@ -10,14 +10,18 @@ std::vector<std::vector<double>>  initializeState(const PDEProblem &problem){
     std::vector<std::vector<double>> new_state(problem.num_x_steps+1, std::vector<double>(problem.num_y_steps+1,0));
     double x_i = problem.x0;
     double y_i = problem.y0;
-
-    for(int i = 0; i <= problem.num_x_steps; ++i){
-        for(int j = 0; j <= problem.num_y_steps; ++j) {
-            new_state[i][j] = problem.initDeflectionFunc({x_i,y_i});
-            y_i += problem.hy;
+    if(problem.initDeflectionFunc_isSet) {
+        for (int i = 0; i <= problem.num_x_steps; ++i) {
+            for (int j = 0; j <= problem.num_y_steps; ++j) {
+                new_state[i][j] = problem.initDeflectionFunc({x_i, y_i});
+                y_i += problem.hy;
+            }
+            y_i = problem.y0;
+            x_i += problem.hx;
         }
-        y_i = problem.y0;
-        x_i += problem.hx;
+    }
+    else{
+        std::cout << "LOG[WARN]: InitDeflectionFunc was not set!!!" << std::endl;
     }
 
     return new_state;
@@ -26,6 +30,41 @@ std::vector<std::vector<double>>  initializeState(const PDEProblem &problem){
 
 
 bool LongTransScheme(const PDEProblem &problem, const string &filename) {
+
+    // Инициализация начального состояния
+    std::vector<std::vector<double>> state_j = initializeState(problem);
+    // Создание файла
+    std::string path = "./OutputData/" + filename;
+    std::ofstream fpoints(path);
+    std::cout << "log[INFO]: Starting ExplicitScheme" << std::endl;
+    std::cout << "log[INFO]: Opening a file \"" << filename << "\" to write..." << std::endl;
+    if (fpoints.is_open()) {
+        double t_i = problem.t0;
+        double x_i = problem.x0;
+        double y_i = problem.y0;
+        double tau = problem.tau;
+        double half_tau = tau/2;
+        double hx = problem.hx;
+        double hy = problem.hy;
+        std::vector<std::vector<double>> state_jp(state_j);
+        fpoints << t_i << endl;
+        write2DVectorToFile(fpoints, state_j);
+        for(int j = 0; j < problem.num_time_steps; ++j){
+            t_i += half_tau;
+
+            // Calculation across X-axis
+
+            t_i += half_tau;
+
+            // Calculation across Y-axis
+
+        }
+        return true;
+    }
+    else {
+        std::cout << "log[ERROR]: Couldn't open or create a file" << std::endl;
+        return false;
+    }
 /*
     // Инициализация начального состояния
     //std::vector<double> state_0 = init_state(num_space_steps, u_0); //TODO: расширить init_state

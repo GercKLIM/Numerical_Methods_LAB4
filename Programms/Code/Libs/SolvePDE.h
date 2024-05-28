@@ -12,9 +12,8 @@
 #include <sstream>
 #include <cmath>
 #include <functional>
-#include "algebra.cpp"
 #include "FileIO.h"
 #include "PDEProblem.h"
 
-bool LongTransScheme(const PDEProblem& problem, const std::string& filename);
+bool LongTransScheme(const PDEProblem& problem, const std::string& filename="UntitledTest");
 #endif //CODE_SOLVEPDE_H

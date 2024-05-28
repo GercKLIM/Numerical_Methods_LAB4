@@ -9,15 +9,12 @@ include_directories(Libs)
 include_directories(OutputData)
 
 add_executable(Code
-        Libs/algebra.cpp
         Libs/algebra.h
-        Libs/FileIO.cpp
+        Libs/algebra.cpp
         Libs/FileIO.h
         main.cpp
-        Libs/PDEProblem.cpp
         Libs/PDEProblem.h
-        Libs/PDEProblem.h
-        Libs/SolvePDE.cpp
-        Libs/SolvePDE.cpp
         Libs/SolvePDE.h
-        Libs/SolvePDE.h)
+        Libs/PDEProblem.cpp
+        Libs/SolvePDE.cpp
+        Libs/algebra.cpp)
