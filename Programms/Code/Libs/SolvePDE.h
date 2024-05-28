@@ -15,4 +15,6 @@
 #include "algebra.cpp"
 #include "FileIO.h"
 #include "PDEProblem.h"
+
+bool LongTransScheme(const PDEProblem& problem, const std::string& filename);
 #endif //CODE_SOLVEPDE_H

@@ -23,8 +23,10 @@ std::vector<std::vector<double>>  initializeState(const PDEProblem &problem){
     return new_state;
 }
 
-bool LongTransScheme(const PDEProblem& problem, const std::string& filename){
 
+
+bool LongTransScheme(const PDEProblem &problem, const string &filename) {
+/*
     // Инициализация начального состояния
     //std::vector<double> state_0 = init_state(num_space_steps, u_0); //TODO: расширить init_state
     std::vector<double> state_0 = init_state(num_space_steps+1, h, test);
@@ -137,4 +139,5 @@ bool LongTransScheme(const PDEProblem& problem, const std::string& filename){
         std::cout << "log[ERROR]: Couldn't open or create a file" << std::endl;
         return false;
     }
+    */
 };
