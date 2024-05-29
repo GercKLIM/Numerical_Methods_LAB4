@@ -178,6 +178,10 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
                     Dys[problem.num_y_steps] = problem.dirichletBoundaryFunc_North({x_i, problem.Y});
                 } else if (problem.neymanBoundaryFunc_North_isSet) {
                     /* аппроксимация второго рода*/
+                    Ays[problem.num_y_steps] = hx*half_tau/hy;
+                    Bys[problem.num_y_steps] = -(hx*hy/2 + hx*half_tau/hy);
+                    Cys[problem.num_y_steps] = 0;
+                    Dys[problem.num_y_steps] = -(hy*half_tau/2/hx*(state_k[i1+1][problem.num_y_steps] - 2*state_k[i1][problem.num_y_steps] + state_k[i1-1][problem.num_y_steps]) + hx*half_tau*problem.neymanBoundaryFunc_North({x_i, y_i}));
                 }
                 // Г.У. Юг
                 if (problem.dirichletBoundaryFunc_South_isSet) {
@@ -188,9 +192,9 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
                 } else if (problem.neymanBoundaryFunc_South_isSet) {
                     /* аппроксимация второго рода*/
                     Ays[0] = 0;
-                    Bys[0] = hx * hy /2;
+                    Bys[0] = -(hx * hy /2 + hx*half_tau/hy);
                     Cys[0] = hx * half_tau / hy;
-                    Dys[0] = (-1)*( hy * half_tau / 2 / hx * (state_k[i1+1][0] - 2*state_k[i1][0] + state_k[i1-1][0]) - hx*half_tau/hy*state_k[i1][0] + hx*half_tau/hy * problem.neymanBoundaryFunc_South({x_i,y_i}));
+                    Dys[0] = (-1)*( hy * half_tau / 2 / hx * (state_k[i1+1][0] - 2*state_k[i1][0] + state_k[i1-1][0]) + hx*hy/2*state_k[i1][0] + hx*half_tau * problem.neymanBoundaryFunc_South({x_i,y_i}));
                 }
 
                 for(int i2 = 1; i2 < problem.num_y_steps; ++i2){
