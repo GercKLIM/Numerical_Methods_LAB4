@@ -151,14 +151,14 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
                 for(int i1 = 1; i1 < problem.num_x_steps; ++i1){
                     x_i += hx;
                     Axs[i1] = 1/(hx*hx);
-                    Bxs[i1] = -2*( 1/(hx*hx) + 1/tau );
+                    Bxs[i1] = 2*( 1/(hx*hx) + 1/tau );
                     Cxs[i1] = 1/(hx*hx);
-                    Dxs[i1] = -F(state_k[i1][i2], state_k[i1][i2-1],state_k[i1][i2+1], x_i, y_i, problem);
+                    Dxs[i1] = F(state_k[i1][i2], state_k[i1][i2-1],state_k[i1][i2+1], x_i, y_i, problem);
                 }
 
                 std::vector<double> x_line_sol = TridiagonalMatrixAlgorithm(Axs, Bxs, Cxs, Dxs);
                 for(int i1 = 0; i1<=problem.num_x_steps; ++i1){
-                    state_kp[i1][i2] = x_line_sol[i1];
+                    state_k[i1][i2] = x_line_sol[i1];
                 }
             }
             x_i = problem.x0;
@@ -191,9 +191,9 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
 
                 for(int i2 = 1; i2 < problem.num_y_steps; ++i2){
                     Ays[i2] = 1/(hy*hy);
-                    Bys[i2] = -2*( 1/(hy*hy) + 1/tau );
+                    Bys[i2] = 2*( 1/(hy*hy) + 1/tau );
                     Cys[i2] = 1/(hy*hy);
-                    Dys[i2] = -F_hat(state_kp[i1][i2], state_kp[i1-1][i2],state_kp[i1+1][i2], x_i, y_i, problem);
+                    Dys[i2] = F_hat(state_k[i1][i2], state_k[i1-1][i2],state_k[i1+1][i2], x_i, y_i, problem);
                 }
 
                 std::vector<double> y_line_sol = TridiagonalMatrixAlgorithm(Ays, Bys, Cys, Dys);
@@ -213,118 +213,4 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
         std::cout << "log[ERROR]: Couldn't open or create a file" << std::endl;
         return false;
     }
-/*
-    // Инициализация начального состояния
-    //std::vector<double> state_0 = init_state(num_space_steps, u_0); //TODO: расширить init_state
-    std::vector<double> state_0 = init_state(num_space_steps+1, h, test);
-    std::vector<double> As(num_space_steps+1, 0);
-    std::vector<double> Cs(num_space_steps+1, 0);
-    std::vector<double> Bs(num_space_steps+1, 0);
-    std::vector<double> Fs(num_space_steps+1, 0);
-
-    // Создание файла
-    std::string path = "./OutputData/" + filename;
-    std::ofstream fpoints(path);
-    std::cout << "log[INFO]: Starting ExplicitScheme" << std::endl;
-    std::cout << "log[INFO]: Opening a file \"" << filename << "\" to write..." << std::endl;
-    if (fpoints.is_open())
-    {
-        double t_i = t_0;
-        std::vector<double> state_i = state_0;
-        writeVectorToFile(fpoints, t_i, state_i);
-        double x_i = x_0;
-
-        // Эволюция системы во времени
-        for(int j = 0; j <= num_time_steps; ++j) {
-            t_i += tau;
-
-            // Граничные условия слева
-
-            // 1-го рода
-            if(!test.G_left_type){
-                Cs[0] = 1.;
-                Bs[0] = 0.;
-                As[0] = 0.;
-                Fs[0] = test.G_left(t_i);
-            }
-
-                // 2-го рода
-            else {
-                double a1 = a(test.K_ptr, x_0+h, x_0);
-                double w1 = w(a1, state_i[1], state_i[0], h);
-                double kappa = sigma*a1/h / (c*rho*h/(2*tau)+sigma*a1/h);
-                double mu = (c*rho*state_i[0]*h/(2*tau)+sigma*test.G_left(t_i)+(1-sigma)*(test.G_left(t_i-tau)+w1))/(c*rho*h/(2*tau)+sigma*a1/h);
-                Cs[0] = 1.;
-                Bs[0] = kappa;
-                As[0] = 0;
-                Fs[0] = mu;
-
-                if(max_a < fabs(a1))
-                {
-                    max_a = fabs(a1);
-                }
-            }
-
-            // Граничные условия справа
-            // 1-го рода
-            if(!test.G_right_type){
-                Bs[num_space_steps] = 0.;
-                As[num_space_steps] = 0.;
-                Cs[num_space_steps] = 1.;
-                Fs[num_space_steps] = test.G_right(t_i);
-            }
-
-                // 2-го рода
-            else{
-                double am = a(test.K_ptr, X, X-h);
-                double wn = w(am, state_i[num_space_steps], state_i[num_space_steps-1], h);
-                double denom = c * rho * h / (2 * tau) + sigma * am / h;
-                double kappa = sigma * am /h / denom;
-                double mu = (c * rho * state_i[num_space_steps] * h / (2 * tau) + sigma * test.G_right(t_i) + (1 - sigma) * (test.G_right(t_i-tau) - wn)) / denom;
-                Cs[num_space_steps] = 1.;
-                Bs[num_space_steps] = 0.;
-                As[num_space_steps] = kappa;
-                Fs[num_space_steps] = mu;
-                if(max_a < fabs(am))
-                {
-                    max_a = fabs(am);
-                }
-            }
-
-            // Обход пространства
-            for (int i = 1; i < num_space_steps; ++i) {
-                x_i += h;
-                double a_i = a(test.K_ptr, x_i, x_i - h);
-                double a_ip = a(test.K_ptr, x_i + h, x_i);
-                if(max_a < fabs(a_i))
-                {
-                    max_a = fabs(a_i);
-                }
-                if(max_a < fabs(a_ip))
-                {
-                    max_a = fabs(a_ip);
-                }
-                As[i] = sigma / h * a_i;
-                Bs[i] = sigma / h * a_ip;
-                Cs[i] = As[i] + Bs[i] + c * rho * h / tau;
-                Fs[i] = c * rho * h / tau * state_i[i] +
-                        (1 - sigma) * (w(a_ip, state_i[i + 1], state_i[i], h) - w(a_i, state_i[i], state_i[i - 1], h));
-            }
-
-            // Получение нового состояния системы
-            // A - C + B = - F (не домножаем векторы на -1, так как уже считали домноженные)
-            state_i = TridiagonalMatrixAlgorithm(As, Cs, Bs, Fs);
-
-            // Запись в файл
-            writeVectorToFile(fpoints, t_i, state_i);
-        }
-        fpoints.close();
-        std::cout << "!!!!!MAX A = " << max_a << std::endl;
-        return true;
-
-    } else {
-        std::cout << "log[ERROR]: Couldn't open or create a file" << std::endl;
-        return false;
-    }
-    */
 };
