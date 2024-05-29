@@ -145,6 +145,7 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
                     Dxs[problem.num_x_steps] = problem.dirichletBoundaryFunc_East({problem.X, y_i});
                 } else if (problem.neymanBoundaryFunc_East_isSet) {
                     /* аппроксимация второго рода*/
+
                 }
 
                 for(int i1 = 1; i1 < problem.num_x_steps; ++i1){
@@ -204,6 +205,7 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
             y_i = problem.y0;
             fpoints << t_i << endl;
             write2DVectorToFile(fpoints, state_kp);
+            state_k.swap(state_kp);
         }
         return true;
     }
