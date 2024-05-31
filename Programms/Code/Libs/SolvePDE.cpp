@@ -178,10 +178,10 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
                     Dys[problem.num_y_steps] = problem.dirichletBoundaryFunc_North({x_i, problem.Y});
                 } else if (problem.neymanBoundaryFunc_North_isSet) {
                     /* аппроксимация второго рода*/
-                    Ays[problem.num_y_steps] = hx*half_tau/hy;
+                    Ays[problem.num_y_steps] = -hx*half_tau/hy;
                     Bys[problem.num_y_steps] = -(hx*hy/2 + hx*half_tau/hy);
                     Cys[problem.num_y_steps] = 0;
-                    Dys[problem.num_y_steps] = -(hy*half_tau/2/hx*(state_k[i1+1][problem.num_y_steps] - 2*state_k[i1][problem.num_y_steps] + state_k[i1-1][problem.num_y_steps]) + hx*half_tau*problem.neymanBoundaryFunc_North({x_i, y_i}));
+                    Dys[problem.num_y_steps] = -(hy*half_tau/2/hx*(state_k[i1+1][problem.num_y_steps] - 2*state_k[i1][problem.num_y_steps] + state_k[i1-1][problem.num_y_steps]) - hx*half_tau*problem.neymanBoundaryFunc_North({x_i, y_i}) + hx*hy/2*state_k[i1][problem.num_y_steps]);
                 }
                 // Г.У. Юг
                 if (problem.dirichletBoundaryFunc_South_isSet) {
