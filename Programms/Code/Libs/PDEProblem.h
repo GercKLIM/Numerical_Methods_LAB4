@@ -41,43 +41,43 @@ public:
  * */
 
     // Отклонение точки в нулевой момент времени (U_0(x, y, 0))
-    std::function<double(std::vector<double>)> initDeflectionFunc;
+    std::function<double(const std::vector<double>&)> initDeflectionFunc;
     bool  initDeflectionFunc_isSet = false;
 
     // Начальное условие Дирихле для северной границы \xi(x,y,t)
-    std::function<double(std::vector<double>)> dirichletBoundaryFunc_North;
+    std::function<double(const std::vector<double>&)> dirichletBoundaryFunc_North;
     bool  dirichletBoundaryFunc_North_isSet = false;
 
     // Начальное условие Дирихле для южной границы \xi(x,y,t)
-    std::function<double(std::vector<double>)> dirichletBoundaryFunc_South;
+    std::function<double(const std::vector<double>&)> dirichletBoundaryFunc_South;
     bool  dirichletBoundaryFunc_South_isSet = false;
 
     // Начальное условие Дирихле для западной границы \xi(x,y,t)
-    std::function<double(std::vector<double>)> dirichletBoundaryFunc_West;
+    std::function<double(const std::vector<double>&)> dirichletBoundaryFunc_West;
     bool  dirichletBoundaryFunc_West_isSet = false;
 
     // Начальное условие Дирихле для восточной границы \xi(x,y,t)
-    std::function<double(std::vector<double>)> dirichletBoundaryFunc_East;
+    std::function<double(const std::vector<double>&)> dirichletBoundaryFunc_East;
     bool  dirichletBoundaryFunc_East_isSet = false;
 
     // Начальное условие Неймана для северной границы \psi(x,y,t)
-    std::function<double(std::vector<double>)> neymanBoundaryFunc_North;
+    std::function<double(const std::vector<double>&)> neymanBoundaryFunc_North;
     bool  neymanBoundaryFunc_North_isSet = false;
 
     // Начальное условие Неймана для южной границы \psi(x,y,t)
-    std::function<double(std::vector<double>)> neymanBoundaryFunc_South;
+    std::function<double(const std::vector<double>&)> neymanBoundaryFunc_South;
     bool  neymanBoundaryFunc_South_isSet = false;
 
     // Начальное условие Неймана для западной границы \psi(x,y,t)
-    std::function<double(std::vector<double>)> neymanBoundaryFunc_West;
+    std::function<double(const std::vector<double>&)> neymanBoundaryFunc_West;
     bool  neymanBoundaryFunc_West_isSet = false;
 
     // Начальное условие Неймана для восточной границы \psi(x,y,t)
-    std::function<double(std::vector<double>)> neymanBoundaryFunc_East;
+    std::function<double(const std::vector<double>&)> neymanBoundaryFunc_East;
     bool  neymanBoundaryFunc_East_isSet = false;
 
     // Воздействие внешних сил (F(x,y)) (если == 0, то уравнение - однородное)
-    std::function<double(std::vector<double>)> extForcesFunction;
+    std::function<double(const std::vector<double>&)> extForcesFunction;
     bool  extForcesFunction_isSet = false;
 };
 

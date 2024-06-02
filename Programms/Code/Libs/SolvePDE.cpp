@@ -119,6 +119,12 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
         std::vector<double> Cys(problem.num_y_steps+1, 0.);
         std::vector<double> Dys(problem.num_y_steps+1, 0.);
 
+        // Задаём внешние силы (если нету, то ноль будем прибавлять в коэфах)
+        std::function<double(std::vector<double>)> f = ([&] (const std::vector<double>& point) {return  0.;});
+        if(problem.extForcesFunction_isSet){
+            f = problem.extForcesFunction;
+        }
+
         // Максмальное число итераций
         int max_allowed_its = 1000;
         int cur_its = 0;
@@ -139,6 +145,10 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
                     Dxs[0] = problem.dirichletBoundaryFunc_West({problem.x0, y_i});
                 } else if (problem.neymanBoundaryFunc_West_isSet) {
                     /* аппроксимация второго рода*/
+                    Axs[0] = 0.;
+                    Bxs[0] = -(hx*hy/2 + hy*half_tau/hx);
+                    Cxs[0] = -hy*half_tau/hx;
+                    Dxs[0] = -( hx * half_tau / 2 / hy * (state_k[0][i2+1] - 2*state_k[0][i2] + state_k[0][i2-1]) + hx*hy/2*state_k[0][i2] + hy*half_tau * problem.neymanBoundaryFunc_West({problem.x0,y_i}) + + half_tau*hx*hy/2*f({problem.x0,y_i}));
                 }
 
                 // Г.У. Восток
@@ -149,7 +159,10 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
                     Dxs[problem.num_x_steps] = problem.dirichletBoundaryFunc_East({problem.X, y_i});
                 } else if (problem.neymanBoundaryFunc_East_isSet) {
                     /* аппроксимация второго рода*/
-
+                    Axs[problem.num_x_steps] = -hy*half_tau/hx;
+                    Bxs[problem.num_x_steps] = -(hx*hy/2 + hy*half_tau/hx);
+                    Cxs[problem.num_x_steps] = 0.;
+                    Dxs[problem.num_x_steps] = -(hx*half_tau/2/hy*(state_k[problem.num_x_steps][i2+1] - 2*state_k[problem.num_x_steps][i2] + state_k[problem.num_x_steps][i2-1]) + hy*half_tau*problem.neymanBoundaryFunc_East({problem.X, y_i}) + hx*hy/2*state_k[problem.num_x_steps][i2] + half_tau*hx*hy/2*f({problem.X,y_i}));
                 }
 
                 for(int i1 = 1; i1 < problem.num_x_steps; ++i1){
@@ -168,7 +181,6 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
             }
             x_i = problem.x0;
             y_i = problem.y0;
-            //state_kp.swap(state_k);
 
             // слой ,,половинный'' второй (k+1)
             t_i += half_tau;
@@ -188,7 +200,7 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
                     Ays[problem.num_y_steps] = -hx*half_tau/hy;
                     Bys[problem.num_y_steps] = -(hx*hy/2 + hx*half_tau/hy);
                     Cys[problem.num_y_steps] = 0.;
-                    Dys[problem.num_y_steps] = -(hy*half_tau/2/hx*(state_k[i1+1][problem.num_y_steps] - 2*state_k[i1][problem.num_y_steps] + state_k[i1-1][problem.num_y_steps]) + hx*half_tau*problem.neymanBoundaryFunc_North({x_i, problem.Y}) + hx*hy/2*state_k[i1][problem.num_y_steps]);
+                    Dys[problem.num_y_steps] = -(hy*half_tau/2/hx*(state_k[i1+1][problem.num_y_steps] - 2*state_k[i1][problem.num_y_steps] + state_k[i1-1][problem.num_y_steps]) + hx*half_tau*problem.neymanBoundaryFunc_North({x_i, problem.Y}) + hx*hy/2*state_k[i1][problem.num_y_steps] + half_tau*hx*hy/2*f({x_i,problem.Y}));
                 }
                 // Г.У. Юг
                 if (problem.dirichletBoundaryFunc_South_isSet) {
@@ -201,7 +213,7 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
                     Ays[0] = 0;
                     Bys[0] = -(hx * hy /2 + hx*half_tau/hy);
                     Cys[0] = -hx * half_tau / hy;
-                    Dys[0] = -( hy * half_tau / 2 / hx * (state_k[i1+1][0] - 2*state_k[i1][0] + state_k[i1-1][0]) + hx*hy/2*state_k[i1][0] + hx*half_tau * problem.neymanBoundaryFunc_South({x_i,problem.y0}));
+                    Dys[0] = -( hy * half_tau / 2 / hx * (state_k[i1+1][0] - 2*state_k[i1][0] + state_k[i1-1][0]) + hx*hy/2*state_k[i1][0] + hx*half_tau * problem.neymanBoundaryFunc_South({x_i,problem.y0}) + half_tau*hx*hy/2*f({x_i,problem.y0}));
                 }
 
                 for(int i2 = 1; i2 < problem.num_y_steps; ++i2){
