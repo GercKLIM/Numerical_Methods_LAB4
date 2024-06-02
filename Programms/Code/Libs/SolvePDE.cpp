@@ -119,10 +119,14 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
         std::vector<double> Cys(problem.num_y_steps+1, 0.);
         std::vector<double> Dys(problem.num_y_steps+1, 0.);
 
+        // Максмальное число итераций
+        int max_allowed_its = 1000;
+        int cur_its = 0;
         do{
             // слой ,,половинный'' первый (k+1/2)
             t_i += half_tau;
-
+            x_i = problem.x0;
+            y_i = problem.y0;
             // Calculation across X-axis
             for(int i2 = 1; i2 < problem.num_y_steps; ++i2) {
                 y_i += hy;
@@ -158,11 +162,14 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
 
                 std::vector<double> x_line_sol = TridiagonalMatrixAlgorithm(Axs, Bxs, Cxs, Dxs);
                 for(int i1 = 0; i1<=problem.num_x_steps; ++i1){
+                    state_kp[i1][i2] = x_line_sol[i1];
                     state_k[i1][i2] = x_line_sol[i1];
                 }
             }
             x_i = problem.x0;
             y_i = problem.y0;
+            //state_kp.swap(state_k);
+
             // слой ,,половинный'' второй (k+1)
             t_i += half_tau;
 
@@ -205,7 +212,7 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
                 }
 
                 std::vector<double> y_line_sol = TridiagonalMatrixAlgorithm(Ays, Bys, Cys, Dys);
-                for(int i2 = 0; i2<=problem.num_y_steps; ++i2){
+                for(int i2 = 0; i2<=problem.num_y_steps; ++i2) {
                     state_kp[i1][i2] = y_line_sol[i2];
                 }
             }
@@ -214,7 +221,8 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
             fpoints << t_i << endl;
             write2DVectorToFile(fpoints, state_kp);
             state_k.swap(state_kp);
-        }while(norm1(state_k + (-1)*state_kp) > 1e-7);
+            ++cur_its;
+        }while(norm1(state_k + (-1)*state_kp) > 1e-7 || cur_its < max_allowed_its);
         return true;
     }
     else {
