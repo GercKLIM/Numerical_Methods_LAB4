@@ -110,16 +110,16 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
         write2DVectorToFile(fpoints, state_k);
 
         // Utility vectors
-        std::vector<double> Axs(problem.num_x_steps+1, 0);
-        std::vector<double> Bxs(problem.num_x_steps+1, 0);
-        std::vector<double> Cxs(problem.num_x_steps+1, 0);
-        std::vector<double> Dxs(problem.num_x_steps+1, 0);
-        std::vector<double> Ays(problem.num_x_steps+1, 0);
-        std::vector<double> Bys(problem.num_y_steps+1, 0);
-        std::vector<double> Cys(problem.num_y_steps+1, 0);
-        std::vector<double> Dys(problem.num_y_steps+1, 0);
+        std::vector<double> Axs(problem.num_x_steps+1, 0.);
+        std::vector<double> Bxs(problem.num_x_steps+1, 0.);
+        std::vector<double> Cxs(problem.num_x_steps+1, 0.);
+        std::vector<double> Dxs(problem.num_x_steps+1, 0.);
+        std::vector<double> Ays(problem.num_x_steps+1, 0.);
+        std::vector<double> Bys(problem.num_y_steps+1, 0.);
+        std::vector<double> Cys(problem.num_y_steps+1, 0.);
+        std::vector<double> Dys(problem.num_y_steps+1, 0.);
 
-        for(int j = 0; j < problem.num_time_steps; ++j){
+        do{
             // слой ,,половинный'' первый (k+1/2)
             t_i += half_tau;
 
@@ -180,8 +180,8 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
                     /* аппроксимация второго рода*/
                     Ays[problem.num_y_steps] = -hx*half_tau/hy;
                     Bys[problem.num_y_steps] = -(hx*hy/2 + hx*half_tau/hy);
-                    Cys[problem.num_y_steps] = 0;
-                    Dys[problem.num_y_steps] = -(hy*half_tau/2/hx*(state_k[i1+1][problem.num_y_steps] - 2*state_k[i1][problem.num_y_steps] + state_k[i1-1][problem.num_y_steps]) - hx*half_tau*problem.neymanBoundaryFunc_North({x_i, y_i}) + hx*hy/2*state_k[i1][problem.num_y_steps]);
+                    Cys[problem.num_y_steps] = 0.;
+                    Dys[problem.num_y_steps] = -(hy*half_tau/2/hx*(state_k[i1+1][problem.num_y_steps] - 2*state_k[i1][problem.num_y_steps] + state_k[i1-1][problem.num_y_steps]) + hx*half_tau*problem.neymanBoundaryFunc_North({x_i, problem.Y}) + hx*hy/2*state_k[i1][problem.num_y_steps]);
                 }
                 // Г.У. Юг
                 if (problem.dirichletBoundaryFunc_South_isSet) {
@@ -193,8 +193,8 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
                     /* аппроксимация второго рода*/
                     Ays[0] = 0;
                     Bys[0] = -(hx * hy /2 + hx*half_tau/hy);
-                    Cys[0] = hx * half_tau / hy;
-                    Dys[0] = (-1)*( hy * half_tau / 2 / hx * (state_k[i1+1][0] - 2*state_k[i1][0] + state_k[i1-1][0]) + hx*hy/2*state_k[i1][0] + hx*half_tau * problem.neymanBoundaryFunc_South({x_i,y_i}));
+                    Cys[0] = -hx * half_tau / hy;
+                    Dys[0] = -( hy * half_tau / 2 / hx * (state_k[i1+1][0] - 2*state_k[i1][0] + state_k[i1-1][0]) + hx*hy/2*state_k[i1][0] + hx*half_tau * problem.neymanBoundaryFunc_South({x_i,problem.y0}));
                 }
 
                 for(int i2 = 1; i2 < problem.num_y_steps; ++i2){
@@ -214,7 +214,7 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
             fpoints << t_i << endl;
             write2DVectorToFile(fpoints, state_kp);
             state_k.swap(state_kp);
-        }
+        }while(norm1(state_k + (-1)*state_kp) > 1e-7);
         return true;
     }
     else {
