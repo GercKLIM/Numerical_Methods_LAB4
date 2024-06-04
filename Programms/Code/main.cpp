@@ -10,8 +10,8 @@ void make_data_for_tables_test1(){
     double y0_test1 = 0.;
     double Y_test1 = 1.;
     double t0_test1 = 0.;
-    double T_test1 = 1.;
-    double tau_test1 = 0.001;
+    double T_test1 = 10.;
+    double tau = 10e-4;
 
     double h0_x = 0.2;
     double h0_y = 0.2;
@@ -19,8 +19,8 @@ void make_data_for_tables_test1(){
     for (int i = 1; i < 6; i++ ){
 
         // Теструем на тесте 1 из методички
-        PDEProblem test1(x0_test1, X_test1, y0_test1, Y_test1, t0_test1, T_test1, tau_test1,  h0_x, h0_y);
-        test1.initDeflectionFunc = ([&] (std::vector<double> point) {return 1.;});
+        PDEProblem test1(x0_test1, X_test1, y0_test1, Y_test1, t0_test1, T_test1, tau,  h0_x, h0_y);
+        test1.initDeflectionFunc = ([&] (std::vector<double> point) {return 10.;});
         test1.initDeflectionFunc_isSet = true;
         test1.dirichletBoundaryFunc_North = ([&] (std::vector<double> point) {return 1.;});
         test1.dirichletBoundaryFunc_North_isSet = true;
@@ -34,6 +34,7 @@ void make_data_for_tables_test1(){
         // Изменение шага
         h0_x = h0_x / 2.;
         h0_y = h0_y / 2.;
+        tau = tau / 2.;
 
         // Расчёт первого теста
         LongTransScheme_for_tables(test1, "data_for_tables/test1/test1_" + to_string(i) + ".txt");
@@ -49,8 +50,8 @@ void make_data_for_tables_test2(){
     double y0_test2 = 0.;
     double Y_test2 = 1.;
     double t0_test2 = 0.;
-    double T_test2 = 1.;
-    double tau_test2 = 0.001;
+    double T_test2 = 10.;
+    double tau = 10e-8;
     double h0_x = 0.2;
     double h0_y = 0.2;
 
@@ -58,7 +59,7 @@ void make_data_for_tables_test2(){
     for (int i = 1; i < 6; i++ ){
 
         // Теструем на тесте 2 из методички
-        PDEProblem test2(x0_test2, X_test2, y0_test2, Y_test2, t0_test2, T_test2, tau_test2, h0_x, h0_y);
+        PDEProblem test2(x0_test2, X_test2, y0_test2, Y_test2, t0_test2, T_test2, tau, h0_x, h0_y);
         test2.initDeflectionFunc = ([&] (std::vector<double> point) {return 1. + point[1];});
         test2.initDeflectionFunc_isSet = true;
         test2.neymanBoundaryFunc_North = ([&] (std::vector<double> point) {return 1.;});
@@ -73,7 +74,7 @@ void make_data_for_tables_test2(){
         // Изменение шага
         h0_x = h0_x / 2.;
         h0_y = h0_y / 2.;
-
+        tau = tau / 2.;
         // Расчёт первого теста
         LongTransScheme_for_tables(test2, "data_for_tables/test2/test2_" + to_string(i) + ".txt");
     }
@@ -136,10 +137,37 @@ void test2(){
 }
 
 
+void test3(){
+    // Инициализация второго теста из методички
+    double x0_test3 = 0.;
+    double X_test3 = 1.;
+    double y0_test3 = 0.;
+    double Y_test3 = 1.;
+    double t0_test3 = 0.;
+    double T_test3 = 3.;
+    double tau_test3 = 0.00001;
+    double hx_test3 = 0.1;
+    double hy_test3 = 0.1;
+    PDEProblem test3(x0_test3, X_test3, y0_test3, Y_test3, t0_test3, T_test3, tau_test3, hx_test3, hy_test3);
+    test3.initDeflectionFunc = ([&] (std::vector<double> point) {return 1. + point[1];});
+    test3.initDeflectionFunc_isSet = true;
+    test3.neymanBoundaryFunc_West = ([&] (std::vector<double> point) {return 0.;});
+    test3.neymanBoundaryFunc_West_isSet = true;
+    test3.neymanBoundaryFunc_East = ([&] (std::vector<double> point) {return 2.;});
+    test3.neymanBoundaryFunc_East_isSet = true;
+    test3.dirichletBoundaryFunc_South = ([&] (std::vector<double> point) {return point[1] * point[1];});
+    test3.dirichletBoundaryFunc_South_isSet = true;
+    test3.dirichletBoundaryFunc_North = ([&] (std::vector<double> point) {return 1. + point[1] * point[1];});
+    test3.dirichletBoundaryFunc_North_isSet = true;
+    // Расчёт третьего тестаё
+    LongTransScheme(test3, "Test3.txt");
+}
+
+
 
 int main() {
-    //make_data_for_tables_test1();
-    make_data_for_tables_test2();
-
+    make_data_for_tables_test1();
+    //make_data_for_tables_test2();
+    //test3();
     return 0;
 }
