@@ -58,7 +58,7 @@ void write2DVectorToFile(ofstream& file, const std::vector<std::vector<DT>>& v)
         {
             for (int j = 0; j < m; ++j)
             {
-                file << setprecision(16) <<  v[i][j] << " ";
+                file << setprecision(20) <<  v[i][j] << " ";
             }
             file << endl;
         }

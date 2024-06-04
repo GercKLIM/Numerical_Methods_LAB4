@@ -16,4 +16,6 @@
 #include "PDEProblem.h"
 
 bool LongTransScheme(const PDEProblem& problem, const std::string& filename="UntitledTest");
+
+bool LongTransScheme_for_tables(const PDEProblem &problem, const string &filename);
 #endif //CODE_SOLVEPDE_H

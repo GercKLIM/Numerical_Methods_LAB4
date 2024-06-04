@@ -242,3 +242,186 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
         return false;
     }
 };
+
+std::vector<vector<double>> make_web(std::vector<std::vector<double>> matrix, double h_x, double h_y){
+    std::vector<std::vector<double>> new_matrix;
+
+
+    std::vector<double> x_coord;
+    x_coord.push_back(0);
+    for (int i = 0; i <= (matrix[0]).size()-1; i++){
+        x_coord.push_back(h_x * i);
+    }
+    new_matrix.push_back(x_coord);
+
+
+    for (int i = 0; i < matrix.size(); i++) {
+        std::vector<double> vec;
+        vec.push_back(h_y * i);
+        for (int j = 0; j < matrix[0].size(); j++) {
+            vec.push_back(matrix[i][j]);
+        }
+        new_matrix.push_back(vec);
+    }
+
+    return new_matrix;
+}
+
+bool LongTransScheme_for_tables(const PDEProblem &problem, const string &filename) {
+
+    // Инициализация начального состояния
+    std::vector<std::vector<double>> state_k = initializeState(problem);
+    // Создание файла
+    std::string path = "./OutputData/" + filename;
+    std::ofstream fpoints(path);
+    std::cout << "log[INFO]: Starting ExplicitScheme" << std::endl;
+    std::cout << "log[INFO]: Opening a file \"" << filename << "\" to write..." << std::endl;
+    if (fpoints.is_open()) {
+        double t_i = problem.t0;
+        double x_i = problem.x0;
+        double y_i = problem.y0;
+        double tau = problem.tau;
+        double half_tau = tau/2;
+        double hx = problem.hx;
+        double hy = problem.hy;
+        std::vector<std::vector<double>> state_kp(state_k);
+        //fpoints << t_i << endl;
+        //write2DVectorToFile(fpoints, state_k);
+
+        // Utility vectors
+        std::vector<double> Axs(problem.num_x_steps+1, 0.);
+        std::vector<double> Bxs(problem.num_x_steps+1, 0.);
+        std::vector<double> Cxs(problem.num_x_steps+1, 0.);
+        std::vector<double> Dxs(problem.num_x_steps+1, 0.);
+        std::vector<double> Ays(problem.num_x_steps+1, 0.);
+        std::vector<double> Bys(problem.num_y_steps+1, 0.);
+        std::vector<double> Cys(problem.num_y_steps+1, 0.);
+        std::vector<double> Dys(problem.num_y_steps+1, 0.);
+
+        // Задаём внешние силы (если нету, то ноль будем прибавлять в коэфах)
+        std::function<double(std::vector<double>)> f = ([&] (const std::vector<double>& point) {return  0.;});
+        if(problem.extForcesFunction_isSet){
+            f = problem.extForcesFunction;
+        }
+
+        // Максмальное число итераций
+        int max_allowed_its = 1000;
+        int cur_its = 0;
+        do{
+            // слой ,,половинный'' первый (k+1/2)
+            t_i += half_tau;
+            x_i = problem.x0;
+            y_i = problem.y0;
+            // Calculation across X-axis
+            for(int i2 = 1; i2 < problem.num_y_steps; ++i2) {
+                y_i += hy;
+
+                // Г.У. Запад
+                if (problem.dirichletBoundaryFunc_West_isSet) {
+                    Axs[0] = 0.;
+                    Bxs[0] = 1.;
+                    Cxs[0] = 0.;
+                    Dxs[0] = problem.dirichletBoundaryFunc_West({problem.x0, y_i});
+                } else if (problem.neymanBoundaryFunc_West_isSet) {
+                    /* аппроксимация второго рода*/
+                    Axs[0] = 0.;
+                    Bxs[0] = -(hx*hy/2 + hy*half_tau/hx);
+                    Cxs[0] = -hy*half_tau/hx;
+                    Dxs[0] = -( hx * half_tau / 2 / hy * (state_k[0][i2+1] - 2*state_k[0][i2] + state_k[0][i2-1]) + hx*hy/2*state_k[0][i2] + hy*half_tau * problem.neymanBoundaryFunc_West({problem.x0,y_i}) + + half_tau*hx*hy/2*f({problem.x0,y_i}));
+                }
+
+                // Г.У. Восток
+                if (problem.dirichletBoundaryFunc_East_isSet) {
+                    Axs[problem.num_x_steps] = 0.;
+                    Bxs[problem.num_x_steps] = 1.;
+                    Cxs[problem.num_x_steps] = 0.;
+                    Dxs[problem.num_x_steps] = problem.dirichletBoundaryFunc_East({problem.X, y_i});
+                } else if (problem.neymanBoundaryFunc_East_isSet) {
+                    /* аппроксимация второго рода*/
+                    Axs[problem.num_x_steps] = -hy*half_tau/hx;
+                    Bxs[problem.num_x_steps] = -(hx*hy/2 + hy*half_tau/hx);
+                    Cxs[problem.num_x_steps] = 0.;
+                    Dxs[problem.num_x_steps] = -(hx*half_tau/2/hy*(state_k[problem.num_x_steps][i2+1] - 2*state_k[problem.num_x_steps][i2] + state_k[problem.num_x_steps][i2-1]) + hy*half_tau*problem.neymanBoundaryFunc_East({problem.X, y_i}) + hx*hy/2*state_k[problem.num_x_steps][i2] + half_tau*hx*hy/2*f({problem.X,y_i}));
+                }
+
+                for(int i1 = 1; i1 < problem.num_x_steps; ++i1){
+                    x_i += hx;
+                    Axs[i1] = 1/(hx*hx);
+                    Bxs[i1] = 2*( 1/(hx*hx) + 1/tau );
+                    Cxs[i1] = 1/(hx*hx);
+                    Dxs[i1] = F(state_k[i1][i2], state_k[i1][i2-1],state_k[i1][i2+1], x_i, y_i, problem);
+                }
+
+                std::vector<double> x_line_sol = TridiagonalMatrixAlgorithm(Axs, Bxs, Cxs, Dxs);
+                for(int i1 = 0; i1<=problem.num_x_steps; ++i1){
+                    state_kp[i1][i2] = x_line_sol[i1];
+                    state_k[i1][i2] = x_line_sol[i1];
+                }
+            }
+            x_i = problem.x0;
+            y_i = problem.y0;
+
+            // слой ,,половинный'' второй (k+1)
+            t_i += half_tau;
+
+            // Calculation across Y-axis
+            for(int i1 = 1; i1 < problem.num_x_steps; ++i1) {
+                x_i += hx;
+
+                // Г.У. Север
+                if (problem.dirichletBoundaryFunc_North_isSet) {
+                    Ays[problem.num_y_steps] = 0.;
+                    Bys[problem.num_y_steps] = 1.;
+                    Cys[problem.num_y_steps] = 0.;
+                    Dys[problem.num_y_steps] = problem.dirichletBoundaryFunc_North({x_i, problem.Y});
+                } else if (problem.neymanBoundaryFunc_North_isSet) {
+                    /* аппроксимация второго рода*/
+                    Ays[problem.num_y_steps] = -hx*half_tau/hy;
+                    Bys[problem.num_y_steps] = -(hx*hy/2 + hx*half_tau/hy);
+                    Cys[problem.num_y_steps] = 0.;
+                    Dys[problem.num_y_steps] = -(hy*half_tau/2/hx*(state_k[i1+1][problem.num_y_steps] - 2*state_k[i1][problem.num_y_steps] + state_k[i1-1][problem.num_y_steps]) + hx*half_tau*problem.neymanBoundaryFunc_North({x_i, problem.Y}) + hx*hy/2*state_k[i1][problem.num_y_steps] + half_tau*hx*hy/2*f({x_i,problem.Y}));
+                }
+                // Г.У. Юг
+                if (problem.dirichletBoundaryFunc_South_isSet) {
+                    Ays[0] = 0.;
+                    Bys[0] = 1.;
+                    Cys[0] = 0.;
+                    Dys[0] = problem.dirichletBoundaryFunc_South({x_i, problem.y0});
+                } else if (problem.neymanBoundaryFunc_South_isSet) {
+                    /* аппроксимация второго рода*/
+                    Ays[0] = 0;
+                    Bys[0] = -(hx * hy /2 + hx*half_tau/hy);
+                    Cys[0] = -hx * half_tau / hy;
+                    Dys[0] = -( hy * half_tau / 2 / hx * (state_k[i1+1][0] - 2*state_k[i1][0] + state_k[i1-1][0]) + hx*hy/2*state_k[i1][0] + hx*half_tau * problem.neymanBoundaryFunc_South({x_i,problem.y0}) + half_tau*hx*hy/2*f({x_i,problem.y0}));
+                }
+
+                for(int i2 = 1; i2 < problem.num_y_steps; ++i2){
+                    Ays[i2] = 1/(hy*hy);
+                    Bys[i2] = 2*( 1/(hy*hy) + 1/tau );
+                    Cys[i2] = 1/(hy*hy);
+                    Dys[i2] = F_hat(state_k[i1][i2], state_k[i1-1][i2],state_k[i1+1][i2], x_i, y_i, problem);
+                }
+
+                std::vector<double> y_line_sol = TridiagonalMatrixAlgorithm(Ays, Bys, Cys, Dys);
+                for(int i2 = 0; i2<=problem.num_y_steps; ++i2) {
+                    state_kp[i1][i2] = y_line_sol[i2];
+                }
+            }
+            x_i = problem.x0;
+            y_i = problem.y0;
+            //fpoints << t_i << endl;
+            //write2DVectorToFile(fpoints, state_kp);
+            state_k.swap(state_kp);
+            ++cur_its;
+        }while(norm1(state_k + (-1)*state_kp) > 1e-7 || cur_its < max_allowed_its);
+
+        state_kp = make_web(state_k, hx, hy);
+        write2DVectorToFile(fpoints, state_kp);
+
+        return true;
+    }
+    else {
+        std::cout << "log[ERROR]: Couldn't open or create a file" << std::endl;
+        return false;
+    }
+};
