@@ -91,7 +91,7 @@ std::vector<std::vector<double>>  initializeState(const PDEProblem &problem){
 double F(const double& u, const double& u__m, const double& u__p, const double& x, const double& y, const PDEProblem& problem){
     double res = 2/problem.tau * u + (u__p - 2*u + u__m)/(problem.hy * problem.hy);
     if(problem.extForcesFunction_isSet){
-        res += problem.extForcesFunction({x,y});
+        res -= problem.extForcesFunction({x,y});
     }
     return res;
 }
@@ -101,7 +101,7 @@ double F(const double& u, const double& u__m, const double& u__p, const double& 
 double F_hat(const double& u, const double& u_m_, const double& u_p_, const double& x, const double& y, const PDEProblem& problem){
     double res = 2/problem.tau * u + (u_p_ - 2*u + u_m_)/(problem.hx * problem.hx);
     if(problem.extForcesFunction_isSet){
-        res += problem.extForcesFunction({x,y});
+        res -= problem.extForcesFunction({x,y});
     }
     return res;
 }
@@ -166,7 +166,7 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
         // Задаём внешние силы (если нету, то ноль будем прибавлять в коэфах)
         std::function<double(std::vector<double>)> f = ([&] (const std::vector<double>& point) {return  0.;});
         if(problem.extForcesFunction_isSet){
-            f = problem.extForcesFunction;
+            f = ([&] (const std::vector<double>& point) {return  -problem.extForcesFunction(point);});
         }
 
         // Максмальное число итераций
@@ -194,10 +194,6 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
                     Dxs[0] = problem.dirichletBoundaryFunc_West({problem.x0, y_i});
                 } else if (problem.neymanBoundaryFunc_West_isSet) {
                     /* аппроксимация второго рода*/
-                    /*
-                     * slae1.c(0) = -1. / (h1 * h1 / timeStep + 1);
-                       slae1.d(0) = (y1[0][j] * h1 / timeStep + cond.getLeft1(j * h2)) / (h1 / timeStep + 1. / h1);
-                     * */
                     Axs[0] = 0.;
                     Bxs[0] = -1./*-(1./tau + 1./(hx*hx))*/;
                     Cxs[0] = -1. / (hx * hx / tau + 1.)/*-1./(hx*hx)*/;
@@ -212,14 +208,10 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
                     Dxs[problem.num_x_steps] = problem.dirichletBoundaryFunc_East({problem.X, y_i});
                 } else if (problem.neymanBoundaryFunc_East_isSet) {
                     /* аппроксимация второго рода*/
-                    /*
-                     * slae1.a(N1) = -1. / (h1 * h1 / timeStep + 1);
-					slae1.d(N1) = (y1[N1][j] * h1 / timeStep + cond.getRight1(j * h2)) / (h1 / timeStep + 1. / h1);
-                     * */
                     Axs[problem.num_x_steps] = -1. / (hx * hx / tau + 1.)/*-1./(hx*hx)*/;
                     Bxs[problem.num_x_steps] = -1./*-(1./tau + 1./(hx*hx))*/;
                     Cxs[problem.num_x_steps] = 0.;
-                    Dxs[problem.num_x_steps] = -(state_k[problem.num_x_steps][i2] * hx / tau + problem.neymanBoundaryFunc_East({x_i,y_i})) / (hx / tau + 1. / hx)/*-((1./(2*hy*hy))*(state_k[problem.num_x_steps][i2+1] - 2.*state_k[problem.num_x_steps][i2] + state_k[problem.num_x_steps][i2-1]) + (1./hx)*problem.neymanBoundaryFunc_East({problem.X, y_i}) + 1/tau*state_k[problem.num_x_steps][i2] + (1./4.)*(f({problem.X,y_i})+f({problem.X-hx/2.,y_i})))*/;
+                    Dxs[problem.num_x_steps] = -(state_k[problem.num_x_steps][i2] * hx / tau + problem.neymanBoundaryFunc_East({x_i,y_i})) / (hx / tau + 1. / hx) /*-((1./(2*hy*hy))*(state_k[problem.num_x_steps][i2+1] - 2.*state_k[problem.num_x_steps][i2] + state_k[problem.num_x_steps][i2-1]) + (1./hx)*problem.neymanBoundaryFunc_East({problem.X, y_i}) + 1/tau*state_k[problem.num_x_steps][i2] + (1./4.)*(f({problem.X,y_i})+f({problem.X-hx/2.,y_i})))*/;
                 }
 
                 for(int i1 = 1; i1 < problem.num_x_steps; ++i1){
@@ -482,7 +474,7 @@ bool LongTransScheme_for_tables(const PDEProblem &problem, const string &filenam
             //write2DVectorToFile(fpoints, state_kp);
             state_k.swap(state_kp);
             ++cur_its;
-        }while(norm1(state_k + (-1)*state_kp) > 1e-7 && cur_its < max_allowed_its);
+        }while(norm1(state_k + (-1)*state_kp) > 1e-17 && cur_its < max_allowed_its);
 
         state_kp = make_web(state_k, hx, hy);
         write2DVectorToFile(fpoints, state_kp);

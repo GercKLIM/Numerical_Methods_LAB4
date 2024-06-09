@@ -147,8 +147,8 @@ void test3(){
     double Y_test3 = 1.;
     double t0_test3 = 0.;
     double T_test3 = 3.;
-    double hx_test3 = 0.1;
-    double hy_test3 = 0.1;
+    double hx_test3 = 0.025;
+    double hy_test3 = 0.025;
     double tau_test3 = std::sqrt(hx_test3*hx_test3 + hy_test3*hy_test3)/std::sqrt(1./(X_test3*X_test3) + 1./(Y_test3*Y_test3))/M_PI;
 
     PDEProblem test3(x0_test3, X_test3, y0_test3, Y_test3, t0_test3, T_test3, tau_test3, hx_test3, hy_test3);
@@ -196,13 +196,43 @@ void test4(){
     LongTransScheme(test4, "Test4.txt");
 }
 
+void test5(){
+    // Инициализация четвёртого теста
+    double x0_test5 = 0.;
+    double X_test5 = 1.;
+    double y0_test5 = 0.;
+    double Y_test5 = 1.;
+    double t0_test5 = 0.;
+    double T_test5 = 10.;
+    //double tau_test2 = 0.00001;
+    double hx_test5 = 0.2;
+    double hy_test5 = 0.2;
+    double tau_test5 = std::sqrt(hx_test5*hx_test5 + hy_test5*hy_test5)/std::sqrt(1./(X_test5*X_test5) + 1./(Y_test5*Y_test5))/M_PI;
+
+    PDEProblem test5(x0_test5, X_test5, y0_test5, Y_test5, t0_test5, T_test5, tau_test5, hx_test5, hy_test5);
+    test5.initDeflectionFunc = ([&] (std::vector<double> point) {return -1.;});
+    test5.initDeflectionFunc_isSet = true;
+    test5.extForcesFunction = ([&] (std::vector<double> point) {return 2.;});
+    test5.extForcesFunction_isSet = true;
+    test5.dirichletBoundaryFunc_North = ([&] (std::vector<double> point) {return point[0]*point[0];});
+    test5.dirichletBoundaryFunc_North_isSet = true;
+    test5.dirichletBoundaryFunc_South = ([&] (std::vector<double> point) {return point[0]*point[0];});
+    test5.dirichletBoundaryFunc_South_isSet = true;
+    test5.dirichletBoundaryFunc_West = ([&] (std::vector<double> point) {return 0.;});
+    test5.dirichletBoundaryFunc_West_isSet = true;
+    test5.dirichletBoundaryFunc_East = ([&] (std::vector<double> point) {return 1.;});
+    test5.dirichletBoundaryFunc_East_isSet = true;
+    // Расчёт второго теста
+    LongTransScheme(test5, "Test5.txt");
+}
 
 int main() {
     //make_data_for_tables_test1();
     //make_data_for_tables_test2();
     //test1();
      //test2();
-    //test3();
-    test4();
+    test3();
+    //test4();
+    //test5();
     return 0;
 }
