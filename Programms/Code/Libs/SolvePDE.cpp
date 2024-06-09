@@ -288,11 +288,11 @@ bool LongTransScheme(const PDEProblem &problem, const string &filename) {
             }
             x_i = problem.x0;
             y_i = problem.y0;
-            fpoints << t_i << endl;
-            write2DVectorToFile(fpoints, state_kp);
+//            fpoints << t_i << endl;
+//           write2DVectorToFile(fpoints, state_kp);
             //state_k.swap(state_kp);
             ++cur_its;
-        }while(Error_calc(1e-7, state_k, state_kph, state_kp) && cur_its < max_allowed_its/*norm1(state_k + (-1)*state_kp) > 1e-17 && cur_its < max_allowed_its*/ );
+        }while(Error_calc(1e-17, state_k, state_kph, state_kp) && cur_its < max_allowed_its/*norm1(state_k + (-1)*state_kp) > 1e-17 && cur_its < max_allowed_its*/ );
         std::cout << cur_its << std::endl;
         fpoints << t_i << endl;
         write2DVectorToFile(fpoints, state_kp);
@@ -328,7 +328,7 @@ std::vector<vector<double>> make_web(std::vector<std::vector<double>> matrix, do
     return new_matrix;
 }
 
-bool LongTransScheme_for_tables(const PDEProblem &problem, const string &filename) {
+bool LongTransScheme_for_tables(const PDEProblem &problem, const string &filename, const double & EPS) {
 
     // Инициализация начального состояния
     std::vector<std::vector<double>> state_k = initializeState(problem);
@@ -341,13 +341,15 @@ bool LongTransScheme_for_tables(const PDEProblem &problem, const string &filenam
         double t_i = problem.t0;
         double x_i = problem.x0;
         double y_i = problem.y0;
-        double tau = problem.tau;
-        double half_tau = tau/2;
         double hx = problem.hx;
         double hy = problem.hy;
+        double tau = problem.tau;
+        //double tau = std::sqrt(hx*hx + hy*hy)/std::sqrt(1./(problem.X*problem.X) + 1./(problem.Y*problem.Y))/M_PI;
+        std::cout<<tau<<std::endl;
+        double half_tau = tau/2;
+
         std::vector<std::vector<double>> state_kp(state_k);
-        //fpoints << t_i << endl;
-        //write2DVectorToFile(fpoints, state_k);
+        std::vector<std::vector<double>> state_kph(state_k);
 
         // Utility vectors
         std::vector<double> Axs(problem.num_x_steps+1, 0.);
@@ -362,17 +364,22 @@ bool LongTransScheme_for_tables(const PDEProblem &problem, const string &filenam
         // Задаём внешние силы (если нету, то ноль будем прибавлять в коэфах)
         std::function<double(std::vector<double>)> f = ([&] (const std::vector<double>& point) {return  0.;});
         if(problem.extForcesFunction_isSet){
-            f = problem.extForcesFunction;
+            f = ([&] (const std::vector<double>& point) {return  -problem.extForcesFunction(point);});
         }
 
         // Максмальное число итераций
-        int max_allowed_its = 1000;
+        int max_allowed_its = 5000;
         int cur_its = 0;
         do{
             // слой ,,половинный'' первый (k+1/2)
             t_i += half_tau;
+            //std::cout << "t_i = " << t_i  << "; cur_its = " << cur_its <<std::endl;
             x_i = problem.x0;
             y_i = problem.y0;
+
+            state_k = state_kp;
+            state_kph = state_k;
+
             // Calculation across X-axis
             for(int i2 = 1; i2 < problem.num_y_steps; ++i2) {
                 y_i += hy;
@@ -386,9 +393,9 @@ bool LongTransScheme_for_tables(const PDEProblem &problem, const string &filenam
                 } else if (problem.neymanBoundaryFunc_West_isSet) {
                     /* аппроксимация второго рода*/
                     Axs[0] = 0.;
-                    Bxs[0] = -(hx*hy/2 + hy*half_tau/hx);
-                    Cxs[0] = -hy*half_tau/hx;
-                    Dxs[0] = -( hx * half_tau / 2 / hy * (state_k[0][i2+1] - 2*state_k[0][i2] + state_k[0][i2-1]) + hx*hy/2*state_k[0][i2] + hy*half_tau * problem.neymanBoundaryFunc_West({problem.x0,y_i}) + + half_tau*hx*hy/2*f({problem.x0,y_i}));
+                    Bxs[0] = -1./*-(1./tau + 1./(hx*hx))*/;
+                    Cxs[0] = -1. / (hx * hx / tau + 1.)/*-1./(hx*hx)*/;
+                    Dxs[0] = -(state_k[0][i2] * hx / tau + problem.neymanBoundaryFunc_West({x_i,y_i})) / (hx / tau + 1. / hx)/*-( (1./(2.*hy*hy)) * (state_k[0][i2+1] - 2.*state_k[0][i2] + state_k[0][i2-1]) + (1./tau)*state_k[0][i2] + (1./hx) * problem.neymanBoundaryFunc_West({problem.x0,y_i}) + (0.5)*f({problem.x0,y_i}))*/;
                 }
 
                 // Г.У. Восток
@@ -399,10 +406,10 @@ bool LongTransScheme_for_tables(const PDEProblem &problem, const string &filenam
                     Dxs[problem.num_x_steps] = problem.dirichletBoundaryFunc_East({problem.X, y_i});
                 } else if (problem.neymanBoundaryFunc_East_isSet) {
                     /* аппроксимация второго рода*/
-                    Axs[problem.num_x_steps] = -hy*half_tau/hx;
-                    Bxs[problem.num_x_steps] = -(hx*hy/2 + hy*half_tau/hx);
+                    Axs[problem.num_x_steps] = -1. / (hx * hx / tau + 1.)/*-1./(hx*hx)*/;
+                    Bxs[problem.num_x_steps] = -1./*-(1./tau + 1./(hx*hx))*/;
                     Cxs[problem.num_x_steps] = 0.;
-                    Dxs[problem.num_x_steps] = -(hx*half_tau/2/hy*(state_k[problem.num_x_steps][i2+1] - 2*state_k[problem.num_x_steps][i2] + state_k[problem.num_x_steps][i2-1]) + hy*half_tau*problem.neymanBoundaryFunc_East({problem.X, y_i}) + hx*hy/2*state_k[problem.num_x_steps][i2] + half_tau*hx*hy/2*f({problem.X,y_i}));
+                    Dxs[problem.num_x_steps] = -(state_k[problem.num_x_steps][i2] * hx / tau + problem.neymanBoundaryFunc_East({x_i,y_i})) / (hx / tau + 1. / hx) /*-((1./(2*hy*hy))*(state_k[problem.num_x_steps][i2+1] - 2.*state_k[problem.num_x_steps][i2] + state_k[problem.num_x_steps][i2-1]) + (1./hx)*problem.neymanBoundaryFunc_East({problem.X, y_i}) + 1/tau*state_k[problem.num_x_steps][i2] + (1./4.)*(f({problem.X,y_i})+f({problem.X-hx/2.,y_i})))*/;
                 }
 
                 for(int i1 = 1; i1 < problem.num_x_steps; ++i1){
@@ -415,9 +422,14 @@ bool LongTransScheme_for_tables(const PDEProblem &problem, const string &filenam
 
                 std::vector<double> x_line_sol = TridiagonalMatrixAlgorithm(Axs, Bxs, Cxs, Dxs);
                 for(int i1 = 0; i1<=problem.num_x_steps; ++i1){
-                    state_kp[i1][i2] = x_line_sol[i1];
-                    state_k[i1][i2] = x_line_sol[i1];
+                    state_kph[i1][i2] = x_line_sol[i1];
+                    //out(state_k[i1]);
                 }
+                state_kp[0][i2] = state_kph[0][i2];
+                state_kp[problem.num_x_steps][i2] = state_kph[problem.num_x_steps][i2];
+                //std::cout<<"tridig sol: "<<std::endl;
+                //out(x_line_sol);
+                //std::cout<<"---"<<std::endl;
             }
             x_i = problem.x0;
             y_i = problem.y0;
@@ -437,10 +449,10 @@ bool LongTransScheme_for_tables(const PDEProblem &problem, const string &filenam
                     Dys[problem.num_y_steps] = problem.dirichletBoundaryFunc_North({x_i, problem.Y});
                 } else if (problem.neymanBoundaryFunc_North_isSet) {
                     /* аппроксимация второго рода*/
-                    Ays[problem.num_y_steps] = -hx*half_tau/hy;
-                    Bys[problem.num_y_steps] = -(hx*hy/2 + hx*half_tau/hy);
+                    Ays[problem.num_y_steps] = -1. / (hy * hy / tau + 1)/*-1./(hy*hy)*/;
+                    Bys[problem.num_y_steps] = -1./*-(1./tau + 1./(hy*hy))*/;
                     Cys[problem.num_y_steps] = 0.;
-                    Dys[problem.num_y_steps] = -(hy*half_tau/2/hx*(state_k[i1+1][problem.num_y_steps] - 2*state_k[i1][problem.num_y_steps] + state_k[i1-1][problem.num_y_steps]) + hx*half_tau*problem.neymanBoundaryFunc_North({x_i, problem.Y}) + hx*hy/2*state_k[i1][problem.num_y_steps] + half_tau*hx*hy/2*f({x_i,problem.Y}));
+                    Dys[problem.num_y_steps] = -(state_kph[i1][problem.num_y_steps] * hy / tau + problem.neymanBoundaryFunc_North({x_i, y_i})) / (hy / tau + 1. / hy)/*-((1./(2.*hx*hx))*(state_kph[i1+1][problem.num_y_steps] - 2.*state_kph[i1][problem.num_y_steps] + state_kph[i1-1][problem.num_y_steps]) + (1./hy)*problem.neymanBoundaryFunc_North({x_i, problem.Y}) + 1./tau*state_kph[i1][problem.num_y_steps] + (0.5)*f({x_i,problem.Y}))*/;
                 }
                 // Г.У. Юг
                 if (problem.dirichletBoundaryFunc_South_isSet) {
@@ -450,34 +462,38 @@ bool LongTransScheme_for_tables(const PDEProblem &problem, const string &filenam
                     Dys[0] = problem.dirichletBoundaryFunc_South({x_i, problem.y0});
                 } else if (problem.neymanBoundaryFunc_South_isSet) {
                     /* аппроксимация второго рода*/
-                    Ays[0] = 0;
-                    Bys[0] = -(hx * hy /2 + hx*half_tau/hy);
-                    Cys[0] = -hx * half_tau / hy;
-                    Dys[0] = -( hy * half_tau / 2 / hx * (state_k[i1+1][0] - 2*state_k[i1][0] + state_k[i1-1][0]) + hx*hy/2*state_k[i1][0] + hx*half_tau * problem.neymanBoundaryFunc_South({x_i,problem.y0}) + half_tau*hx*hy/2*f({x_i,problem.y0}));
+                    Ays[0] = 0.;
+                    Bys[0] = -1./*-(1./tau + 1./(hy*hy))*/;
+                    Cys[0] = -1. / (hy * hy / tau + 1.)/*-1./(hy*hy)*/;
+                    Dys[0] = -(state_kph[i1][0] * hy / tau + problem.neymanBoundaryFunc_South({x_i, y_i})) / (hy / tau + 1. / hy)/*-( (1./(2.*hx*hx)) * (state_kp[i1+1][0] - 2*state_kp[i1][0] + state_kph[i1-1][0]) + (1./tau)*state_kp[i1][0] + 1./tau*state_kph[i1][0] + (1./hy) * problem.neymanBoundaryFunc_South({x_i,problem.y0}) + (0.5)*f({x_i,problem.y0}))*/;
                 }
 
                 for(int i2 = 1; i2 < problem.num_y_steps; ++i2){
                     Ays[i2] = 1/(hy*hy);
                     Bys[i2] = 2*( 1/(hy*hy) + 1/tau );
                     Cys[i2] = 1/(hy*hy);
-                    Dys[i2] = F_hat(state_k[i1][i2], state_k[i1-1][i2],state_k[i1+1][i2], x_i, y_i, problem);
+                    Dys[i2] = F_hat(state_kph[i1][i2], state_kph[i1-1][i2],state_kph[i1+1][i2], x_i, y_i, problem);
                 }
 
                 std::vector<double> y_line_sol = TridiagonalMatrixAlgorithm(Ays, Bys, Cys, Dys);
                 for(int i2 = 0; i2<=problem.num_y_steps; ++i2) {
                     state_kp[i1][i2] = y_line_sol[i2];
                 }
+
+                //std::cout<<"tridig sol: "<<std::endl;
+                //out(y_line_sol);
+                //std::cout<<"---"<<std::endl;
             }
             x_i = problem.x0;
             y_i = problem.y0;
-            //fpoints << t_i << endl;
-            //write2DVectorToFile(fpoints, state_kp);
-            state_k.swap(state_kp);
+//            fpoints << t_i << endl;
+//           write2DVectorToFile(fpoints, state_kp);
+            //state_k.swap(state_kp);
             ++cur_its;
-        }while(norm1(state_k + (-1)*state_kp) > 1e-17 && cur_its < max_allowed_its);
+        }while(Error_calc(hx*hy*EPS, state_k, state_kph, state_kp) && cur_its < max_allowed_its/*norm1(state_k + (-1)*state_kp) > 1e-17 && cur_its < max_allowed_its*/ );
 
-        state_kp = make_web(state_k, hx, hy);
-        write2DVectorToFile(fpoints, state_kp);
+        state_k = make_web(state_kp, hx, hy);
+        write2DVectorToFile(fpoints, state_k);
 
         return true;
     }

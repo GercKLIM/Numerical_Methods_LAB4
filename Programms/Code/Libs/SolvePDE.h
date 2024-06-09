@@ -17,5 +17,5 @@
 
 bool LongTransScheme(const PDEProblem& problem, const std::string& filename="UntitledTest");
 
-bool LongTransScheme_for_tables(const PDEProblem &problem, const string &filename);
+bool LongTransScheme_for_tables(const PDEProblem &problem, const string &filename, const double & EPS = 1e-2);
 #endif //CODE_SOLVEPDE_H

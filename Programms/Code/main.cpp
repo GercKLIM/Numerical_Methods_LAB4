@@ -11,16 +11,15 @@ void make_data_for_tables_test1(){
     double Y_test1 = 1.;
     double t0_test1 = 0.;
     double T_test1 = 10.;
-    double tau = 10e-4;
 
     double h0_x = 0.2;
     double h0_y = 0.2;
-
+    double tau = std::sqrt(h0_x*h0_x + h0_y*h0_y)/std::sqrt(1./(X_test1*X_test1) + 1./(Y_test1*Y_test1))/M_PI;
     for (int i = 1; i < 6; i++ ){
 
         // Теструем на тесте 1 из методички
         PDEProblem test1(x0_test1, X_test1, y0_test1, Y_test1, t0_test1, T_test1, tau,  h0_x, h0_y);
-        test1.initDeflectionFunc = ([&] (std::vector<double> point) {return 10.;});
+        test1.initDeflectionFunc = ([&] (std::vector<double> point) {return -1.;});
         test1.initDeflectionFunc_isSet = true;
         test1.dirichletBoundaryFunc_North = ([&] (std::vector<double> point) {return 1.;});
         test1.dirichletBoundaryFunc_North_isSet = true;
@@ -51,16 +50,16 @@ void make_data_for_tables_test2(){
     double Y_test2 = 1.;
     double t0_test2 = 0.;
     double T_test2 = 10.;
-    double tau = 10e-8;
     double h0_x = 0.2;
     double h0_y = 0.2;
+    double tau = std::sqrt(h0_x*h0_x + h0_y*h0_y)/std::sqrt(1./(X_test2*X_test2) + 1./(Y_test2*Y_test2))/M_PI;
 
 
     for (int i = 1; i < 6; i++ ){
 
         // Теструем на тесте 2 из методички
         PDEProblem test2(x0_test2, X_test2, y0_test2, Y_test2, t0_test2, T_test2, tau, h0_x, h0_y);
-        test2.initDeflectionFunc = ([&] (std::vector<double> point) {return 1. + point[1];});
+        test2.initDeflectionFunc = ([&] (std::vector<double> point) {return 1000.;});
         test2.initDeflectionFunc_isSet = true;
         test2.neymanBoundaryFunc_North = ([&] (std::vector<double> point) {return 1.;});
         test2.neymanBoundaryFunc_North_isSet = true;
@@ -227,11 +226,11 @@ void test5(){
 }
 
 int main() {
-    //make_data_for_tables_test1();
-    //make_data_for_tables_test2();
+    make_data_for_tables_test1();
+    make_data_for_tables_test2();
     //test1();
      //test2();
-    test3();
+    //test3();
     //test4();
     //test5();
     return 0;
